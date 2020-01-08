@@ -2,6 +2,7 @@ package at.htl.gotjdbcrepository.control;
 
 import at.htl.gotjdbcrepository.entity.Person;
 import org.apache.derby.jdbc.ClientDataSource;
+import org.assertj.db.type.Source;
 import org.assertj.db.type.Table;
 import org.junit.jupiter.api.*;
 
@@ -24,6 +25,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @TestMethodOrder(MethodOrderer.Alphanumeric.class)
 class PersonRepositoryTest {
+
+    // /opt/db-derby-10.14.2.0-bin/bin/startNetworkServer -noSecurityManager
 
     private static final String HUGE_FILE = "got.csv";
     private static final String SMALL_FILE = "got2.csv";
@@ -315,6 +318,32 @@ class PersonRepositoryTest {
         personTable = new Table(dataSource, TABLE_NAME);
         output(personTable).toConsole();
         org.assertj.db.api.Assertions.assertThat(personTable).isEmpty();
+    }
+
+    @Test
+    void test115_delete() {
+        dropTable(TABLE_NAME);
+        setRepositoryInstanceToNull();
+
+        PersonRepository personRepository = getInstance();
+        Person missandei1 = new Person("Missandei", "Asshai", "Longthorpe of Longsister");
+        Person missandei2 = new Person("Missandei", "Lorath", "Lyberr");
+        missandei1 = personRepository.save(missandei1);
+        missandei2 = personRepository.save(missandei2);
+
+        Long deleteId = missandei1.getId();
+
+        Table personTable = new Table(dataSource, TABLE_NAME);
+        output(personTable).toConsole();
+
+        org.assertj.db.api.Assertions.assertThat(personTable).hasNumberOfRows(2);
+
+        personRepository.delete(deleteId);
+
+        personTable = new Table(dataSource, TABLE_NAME);    // aktualisieren des Table-Objektes
+        output(personTable).toConsole();
+
+        org.assertj.db.api.Assertions.assertThat(personTable).hasNumberOfRows(1);
     }
 
     @Test
